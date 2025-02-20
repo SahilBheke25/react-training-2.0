@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useReducer, useState } from "react";
 
 type Todo = {
   id: number;
@@ -7,41 +7,51 @@ type Todo = {
   isDone: boolean;
 };
 
+const todoReducer = (todos: Todo[], action: any) => {
+  switch(action.type){
+    case 'ADD_TODO':  
+    console.log(action.payload.title," ", action.payload.description)
+      return [...todos, {id: action.payload.id, title: action.payload.title, description: action.payload.description, isDone: false}]
+    default:
+      return todos
+  }
+}
+
 function TodoApp() {
   
   const [title, setTitle] = useState<string>("");
-  const [desc, setDesc] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
   const [idCounter, setIdCounter] = useState(1); 
   const [taskList, setTaskList] = useState<Array<Todo>>([]);
+  const [todos, dispatch] = useReducer(todoReducer, [])
+  // const [todo, setTodo] = useState<Todo>({id: 0, title: "", description: "", isDone:false})
+
+
 
   function handleAddTask(event: React.FormEvent) {
     event.preventDefault();
 
-    if (!title.trim() || !desc.trim()) {
+    if (!title.trim() || !description.trim()) {
       alert("Title and Description cannot be empty!");
       return;
     }
 
-    setTaskList([
-      ...taskList,
-      { id: idCounter, title: title, description: desc, isDone: true },
-    ]);
+    // Reducer call
+    dispatch({type:'ADD_TODO', payload: {id: idCounter, title: title, description: description}})
+
+    // setTaskList([
+    //   ...taskList,
+    //   { id: idCounter, title: title, description: description, isDone: true },
+    // ]);
 
     setIdCounter((prev) => prev + 1);
 
     setTitle("");
-    setDesc("");
+    setDescription("");
   }
 
   function handleIsDone(index: number) {
-    setTaskList((prev) =>
-      prev.map((item) => {
-        if (item.id == index) {
-          return {...item, isDone: !item.isDone}
-        }
-        return item
-      })
-    );
+    setTaskList((prev) => prev.map((item)=> item.id == index ? {...item, isDone: !item.isDone} : item))
   }
 
 
@@ -64,9 +74,9 @@ function TodoApp() {
           <input
             type="text"
             className="form-control"
-            value={desc}
+            value={description}
             onChange={(event) => {
-              setDesc(event.target.value);
+              setDescription(event.target.value);
             }}
           />
         </div>
@@ -90,7 +100,7 @@ function TodoApp() {
             </tr>
           </thead>
           <tbody>
-            {taskList.map((item, index) => (
+            {todos.map((item, index) => (
               <tr key={1 + index} className="">
                 <th>{item.id}</th>
                 <td>{item.title}</td>
