@@ -10,53 +10,44 @@ type Todo = {
 const todoReducer = (todos: Todo[], action: any) => {
   switch(action.type){
     case 'ADD_TODO':  
-    console.log(action.payload.title," ", action.payload.description)
-      return [...todos, {id: action.payload.id, title: action.payload.title, description: action.payload.description, isDone: false}]
+      return [...todos, {...action.payload}]
+    case 'CHANGE_STATUS': 
+      return todos.map((task)=> task.id === action.payload ? {...task, isDone: !task.isDone} : task)
+    case 'DELETE':
+      return todos.filter((task) => task.id != action.payload)
     default:
       return todos
   }
 }
 
 function TodoApp() {
-  
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
+
   const [idCounter, setIdCounter] = useState(1); 
-  const [taskList, setTaskList] = useState<Array<Todo>>([]);
   const [todos, dispatch] = useReducer(todoReducer, [])
-  // const [todo, setTodo] = useState<Todo>({id: 0, title: "", description: "", isDone:false})
-
-
+  const [todo, setTodo] = useState<Todo>({id: -1, title: "", description: "", isDone: false})
 
   function handleAddTask(event: React.FormEvent) {
-    event.preventDefault();
 
-    if (!title.trim() || !description.trim()) {
+    event.preventDefault();
+    if (!todo.title.trim() || !todo.description.trim()) {
       alert("Title and Description cannot be empty!");
       return;
     }
-
+  
     // Reducer call
-    dispatch({type:'ADD_TODO', payload: {id: idCounter, title: title, description: description}})
-
-    // setTaskList([
-    //   ...taskList,
-    //   { id: idCounter, title: title, description: description, isDone: true },
-    // ]);
+    dispatch({type:'ADD_TODO', payload: {...todo, id: idCounter}})
 
     setIdCounter((prev) => prev + 1);
-
-    setTitle("");
-    setDescription("");
+    setTodo((prev)=>({...prev, id: -1,title:"", description:""}))
+  }
+  
+  function handleIsDone(id: number) {
+    dispatch({type: 'CHANGE_STATUS', payload: id})
   }
 
-  function handleIsDone(index: number) {
-    setTaskList((prev) => prev.map((item)=> item.id == index ? {...item, isDone: !item.isDone} : item))
-  }
 
-
-  function handleDelete(index: number) {
-    setTaskList(taskList.filter((task) => task.id != index));
+  function handleDelete(id: number) {
+    dispatch({type: 'DELETE', payload: id})
   }
 
   return (
@@ -67,16 +58,18 @@ function TodoApp() {
           <input
             type="text"
             className="form-control"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
+            value={todo.title}
+            onChange={(event) => setTodo((prev) => ({...prev, title: event.target.value}))}
           />
           <label className="form-label">Task Description</label>
           <input
             type="text"
             className="form-control"
-            value={description}
+            value={todo.description}
             onChange={(event) => {
-              setDescription(event.target.value);
+              setTodo((prev) => 
+                ({...prev, description: event.target.value})
+            )
             }}
           />
         </div>
